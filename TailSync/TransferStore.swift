@@ -48,7 +48,7 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
 
     private let autoDeleteDelayKey = "autoDeleteDelay"
     private let smartDeleteKey = "smartDeleteEnabled"
-    private let backgroundRefreshIdentifier = "com.sohelislamimran.TailSync.refresh"
+    private let backgroundRefreshIdentifier = Bundle.main.object(forInfoDictionaryKey: "TailSyncBackgroundRefreshIdentifier") as? String ?? ""
     private let minimumTransferRetryDelaySeconds: UInt64 = 90
     private let maximumTransferRetryDelaySeconds: UInt64 = 15 * 60
 

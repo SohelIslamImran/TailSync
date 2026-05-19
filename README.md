@@ -79,11 +79,30 @@ iOS limits long-running background work. TailSync uses photo-library change obse
 
 ## Building
 
-Open the project in Xcode, then update signing for your Apple Developer account if needed.
+Open the project in Xcode:
 
 ```bash
 open TailSync.xcodeproj
 ```
+
+Signing and identifiers are configured in one place:
+
+```text
+Config/TailSyncIdentifiers.xcconfig
+```
+
+Keep that file committed. For your own Apple Developer account, create a local override:
+
+```text
+Config/TailSyncIdentifiers.local.xcconfig
+```
+
+Then set:
+
+- `TAILSYNC_DEVELOPMENT_TEAM`
+- `TAILSYNC_BUNDLE_PREFIX`
+
+`TailSyncIdentifiers.local.xcconfig` is ignored by git. The app bundle ID, share extension bundle ID, App Group, and background refresh identifier are derived from those values. Xcode will use them in the app target, share extension target, entitlements, and runtime storage config.
 
 Command-line build:
 
@@ -94,13 +113,6 @@ xcodebuild \
   -destination 'generic/platform=iOS' \
   build
 ```
-
-The main app and share extension use the same App Group. If you change the bundle identifier, update these values together:
-
-- `PRODUCT_BUNDLE_IDENTIFIER` for `TailSync`
-- `PRODUCT_BUNDLE_IDENTIFIER` for `TailSyncShare`
-- `com.apple.security.application-groups` in both entitlement files
-- `SharedDeviceStorage.appGroupID`
 
 ## Smoke Testing Taildrop
 

@@ -2,10 +2,11 @@ import Foundation
 
 enum SharedDeviceStorage {
     static let devicesKey = "taildropDevices"
-    static let appGroupID = "group.com.sohelislamimran.TailSync"
+    static let appGroupID = Bundle.main.object(forInfoDictionaryKey: "TailSyncAppGroupIdentifier") as? String ?? ""
 
     static var defaults: UserDefaults {
-        UserDefaults(suiteName: appGroupID) ?? .standard
+        guard !appGroupID.isEmpty else { return .standard }
+        return UserDefaults(suiteName: appGroupID) ?? .standard
     }
 
     static func loadDevices(fallback: [TaildropDevice]) -> [TaildropDevice] {

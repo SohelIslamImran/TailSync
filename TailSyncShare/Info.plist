@@ -21,6 +21,8 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>TailSyncAppGroupIdentifier</key>
+	<string>$(TAILSYNC_APP_GROUP)</string>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>

@@ -38,6 +38,9 @@ fastlane/test_output/
 .env
 .env.*
 
+# Local signing / bundle identifier overrides
+Config/TailSyncIdentifiers.local.xcconfig
+
 # Editor
 .vscode/
 .idea/

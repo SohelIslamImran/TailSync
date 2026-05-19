@@ -1,0 +1,11 @@
+// TailSync public signing and identifier defaults.
+// Keep this file committed. Put personal values in TailSyncIdentifiers.local.xcconfig.
+
+TAILSYNC_DEVELOPMENT_TEAM =
+TAILSYNC_BUNDLE_PREFIX = com.example
+TAILSYNC_APP_BUNDLE_ID = $(TAILSYNC_BUNDLE_PREFIX).TailSync
+TAILSYNC_SHARE_BUNDLE_ID = $(TAILSYNC_APP_BUNDLE_ID).ShareExtension
+TAILSYNC_APP_GROUP = group.$(TAILSYNC_APP_BUNDLE_ID)
+TAILSYNC_BG_REFRESH_ID = $(TAILSYNC_APP_BUNDLE_ID).refresh
+
+#include? "TailSyncIdentifiers.local.xcconfig"

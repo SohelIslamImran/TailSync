@@ -27,9 +27,13 @@
 	<string>TailSync needs access to transfer photos and videos to your Taildrop devices over Tailscale.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>TailSync needs permission to modify the photo library after successful transfers.</string>
+	<key>TailSyncAppGroupIdentifier</key>
+	<string>$(TAILSYNC_APP_GROUP)</string>
+	<key>TailSyncBackgroundRefreshIdentifier</key>
+	<string>$(TAILSYNC_BG_REFRESH_ID)</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>com.sohelislamimran.TailSync.refresh</string>
+		<string>$(TAILSYNC_BG_REFRESH_ID)</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict>

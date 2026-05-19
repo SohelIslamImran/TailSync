@@ -71,6 +71,7 @@
 		0B0000010000000000000013 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0B0000010000000000000014 /* TailSyncShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TailSyncShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0B0000010000000000000017 /* TailSyncShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TailSyncShare.entitlements; sourceTree = "<group>"; };
+		0C0000010000000000000010 /* TailSyncIdentifiers.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TailSyncIdentifiers.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +95,7 @@
 		0A0000010000000000000020 = {
 			isa = PBXGroup;
 			children = (
+				0C0000010000000000000020 /* Config */,
 				0A0000010000000000000021 /* TailSync */,
 				0B0000010000000000000015 /* TailSyncShare */,
 				0A0000010000000000000022 /* Products */,
@@ -138,6 +140,14 @@
 				0B0000010000000000000013 /* Info.plist */,
 			);
 			path = TailSyncShare;
+			sourceTree = "<group>";
+		};
+		0C0000010000000000000020 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				0C0000010000000000000010 /* TailSyncIdentifiers.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -390,13 +400,14 @@
 		};
 		0A0000010000000000000080 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0C0000010000000000000010 /* TailSyncIdentifiers.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = TailSync/TailSync.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KSTB6CZCMC;
+				DEVELOPMENT_TEAM = "$(TAILSYNC_DEVELOPMENT_TEAM)";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TailSync/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -405,7 +416,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sohelislamimran.TailSync;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(TAILSYNC_APP_BUNDLE_ID)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
@@ -415,13 +426,14 @@
 		};
 		0A0000010000000000000081 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0C0000010000000000000010 /* TailSyncIdentifiers.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = TailSync/TailSync.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KSTB6CZCMC;
+				DEVELOPMENT_TEAM = "$(TAILSYNC_DEVELOPMENT_TEAM)";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TailSync/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -430,7 +442,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sohelislamimran.TailSync;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(TAILSYNC_APP_BUNDLE_ID)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
@@ -440,12 +452,13 @@
 		};
 		0B0000010000000000000080 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0C0000010000000000000010 /* TailSyncIdentifiers.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = TailSyncShare/TailSyncShare.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KSTB6CZCMC;
+				DEVELOPMENT_TEAM = "$(TAILSYNC_DEVELOPMENT_TEAM)";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TailSyncShare/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -455,7 +468,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sohelislamimran.TailSync.ShareExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(TAILSYNC_SHARE_BUNDLE_ID)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -466,12 +479,13 @@
 		};
 		0B0000010000000000000081 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0C0000010000000000000010 /* TailSyncIdentifiers.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = TailSyncShare/TailSyncShare.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KSTB6CZCMC;
+				DEVELOPMENT_TEAM = "$(TAILSYNC_DEVELOPMENT_TEAM)";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = TailSyncShare/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -481,7 +495,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sohelislamimran.TailSync.ShareExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(TAILSYNC_SHARE_BUNDLE_ID)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
