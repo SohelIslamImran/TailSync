@@ -1,0 +1,526 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0A0000010000000000000001 /* TailSyncApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000011 /* TailSyncApp.swift */; };
+		0A0000010000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000012 /* ContentView.swift */; };
+		0A0000010000000000000003 /* TransferStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000013 /* TransferStore.swift */; };
+		0A0000010000000000000004 /* PhotoLibraryClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000014 /* PhotoLibraryClient.swift */; };
+		0A0000010000000000000005 /* TailscaleUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000015 /* TailscaleUploader.swift */; };
+		0A0000010000000000000006 /* TaildropSmokeTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000017 /* TaildropSmokeTest.swift */; };
+		0A0000010000000000000007 /* TransferRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000018 /* TransferRecord.swift */; };
+		0A0000010000000000000008 /* TransferManifestStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000019 /* TransferManifestStore.swift */; };
+		0A0000010000000000000009 /* NotificationClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A000001000000000000001A /* NotificationClient.swift */; };
+		0A000001000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0A000001000000000000001B /* Assets.xcassets */; };
+		0B0000010000000000000001 /* DeviceReachabilityClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0000010000000000000010 /* DeviceReachabilityClient.swift */; };
+		0B0000010000000000000002 /* SharedDeviceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0000010000000000000011 /* SharedDeviceStorage.swift */; };
+		0B0000010000000000000003 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0000010000000000000012 /* ShareViewController.swift */; };
+		0B0000010000000000000004 /* TailscaleUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000015 /* TailscaleUploader.swift */; };
+		0B0000010000000000000005 /* PhotoLibraryClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000014 /* PhotoLibraryClient.swift */; };
+		0B0000010000000000000006 /* TransferRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000018 /* TransferRecord.swift */; };
+		0B0000010000000000000007 /* SharedDeviceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0000010000000000000011 /* SharedDeviceStorage.swift */; };
+		0B0000010000000000000008 /* TailSyncShare.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 0B0000010000000000000014 /* TailSyncShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0B0000010000000000000036 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0A0000010000000000000040 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0B0000010000000000000030;
+			remoteInfo = TailSyncShare;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0B0000010000000000000034 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				0B0000010000000000000008 /* TailSyncShare.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0A0000010000000000000010 /* TailSync.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TailSync.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0A0000010000000000000011 /* TailSyncApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TailSyncApp.swift; sourceTree = "<group>"; };
+		0A0000010000000000000012 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		0A0000010000000000000013 /* TransferStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferStore.swift; sourceTree = "<group>"; };
+		0A0000010000000000000014 /* PhotoLibraryClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLibraryClient.swift; sourceTree = "<group>"; };
+		0A0000010000000000000015 /* TailscaleUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TailscaleUploader.swift; sourceTree = "<group>"; };
+		0A0000010000000000000016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		0A0000010000000000000017 /* TaildropSmokeTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaildropSmokeTest.swift; sourceTree = "<group>"; };
+		0A0000010000000000000018 /* TransferRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferRecord.swift; sourceTree = "<group>"; };
+		0A0000010000000000000019 /* TransferManifestStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferManifestStore.swift; sourceTree = "<group>"; };
+		0A000001000000000000001A /* NotificationClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationClient.swift; sourceTree = "<group>"; };
+		0A000001000000000000001B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		0B0000010000000000000016 /* TailSync.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TailSync.entitlements; sourceTree = "<group>"; };
+		0B0000010000000000000010 /* DeviceReachabilityClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceReachabilityClient.swift; sourceTree = "<group>"; };
+		0B0000010000000000000011 /* SharedDeviceStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDeviceStorage.swift; sourceTree = "<group>"; };
+		0B0000010000000000000012 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		0B0000010000000000000013 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		0B0000010000000000000014 /* TailSyncShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TailSyncShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		0B0000010000000000000017 /* TailSyncShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TailSyncShare.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0A0000010000000000000032 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0B0000010000000000000032 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0A0000010000000000000020 = {
+			isa = PBXGroup;
+			children = (
+				0A0000010000000000000021 /* TailSync */,
+				0B0000010000000000000015 /* TailSyncShare */,
+				0A0000010000000000000022 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		0A0000010000000000000021 /* TailSync */ = {
+			isa = PBXGroup;
+			children = (
+				0A0000010000000000000011 /* TailSyncApp.swift */,
+				0A0000010000000000000012 /* ContentView.swift */,
+				0A0000010000000000000013 /* TransferStore.swift */,
+				0A0000010000000000000014 /* PhotoLibraryClient.swift */,
+				0A0000010000000000000015 /* TailscaleUploader.swift */,
+				0B0000010000000000000010 /* DeviceReachabilityClient.swift */,
+				0A0000010000000000000017 /* TaildropSmokeTest.swift */,
+				0A0000010000000000000018 /* TransferRecord.swift */,
+				0A0000010000000000000019 /* TransferManifestStore.swift */,
+				0B0000010000000000000011 /* SharedDeviceStorage.swift */,
+				0A000001000000000000001A /* NotificationClient.swift */,
+				0A000001000000000000001B /* Assets.xcassets */,
+				0B0000010000000000000016 /* TailSync.entitlements */,
+				0A0000010000000000000016 /* Info.plist */,
+			);
+			path = TailSync;
+			sourceTree = "<group>";
+		};
+		0A0000010000000000000022 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0A0000010000000000000010 /* TailSync.app */,
+				0B0000010000000000000014 /* TailSyncShare.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		0B0000010000000000000015 /* TailSyncShare */ = {
+			isa = PBXGroup;
+			children = (
+				0B0000010000000000000012 /* ShareViewController.swift */,
+				0B0000010000000000000017 /* TailSyncShare.entitlements */,
+				0B0000010000000000000013 /* Info.plist */,
+			);
+			path = TailSyncShare;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0A0000010000000000000030 /* TailSync */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0A0000010000000000000060 /* Build configuration list for PBXNativeTarget "TailSync" */;
+			buildPhases = (
+				0A0000010000000000000031 /* Sources */,
+				0A0000010000000000000032 /* Frameworks */,
+				0A0000010000000000000033 /* Resources */,
+				0B0000010000000000000034 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0B0000010000000000000035 /* PBXTargetDependency */,
+			);
+			name = TailSync;
+			productName = TailSync;
+			productReference = 0A0000010000000000000010 /* TailSync.app */;
+			productType = "com.apple.product-type.application";
+		};
+		0B0000010000000000000030 /* TailSyncShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0B0000010000000000000060 /* Build configuration list for PBXNativeTarget "TailSyncShare" */;
+			buildPhases = (
+				0B0000010000000000000031 /* Sources */,
+				0B0000010000000000000032 /* Frameworks */,
+				0B0000010000000000000033 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TailSyncShare;
+			productName = TailSyncShare;
+			productReference = 0B0000010000000000000014 /* TailSyncShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0A0000010000000000000040 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
+				TargetAttributes = {
+					0A0000010000000000000030 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					0B0000010000000000000030 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+				};
+			};
+			buildConfigurationList = 0A0000010000000000000050 /* Build configuration list for PBXProject "TailSync" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 0A0000010000000000000020;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 0A0000010000000000000022 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0A0000010000000000000030 /* TailSync */,
+				0B0000010000000000000030 /* TailSyncShare */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0A0000010000000000000033 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0A000001000000000000000A /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0B0000010000000000000033 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0A0000010000000000000031 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0A0000010000000000000001 /* TailSyncApp.swift in Sources */,
+				0A0000010000000000000002 /* ContentView.swift in Sources */,
+				0A0000010000000000000003 /* TransferStore.swift in Sources */,
+				0A0000010000000000000004 /* PhotoLibraryClient.swift in Sources */,
+				0A0000010000000000000005 /* TailscaleUploader.swift in Sources */,
+				0B0000010000000000000001 /* DeviceReachabilityClient.swift in Sources */,
+				0A0000010000000000000006 /* TaildropSmokeTest.swift in Sources */,
+				0A0000010000000000000007 /* TransferRecord.swift in Sources */,
+				0A0000010000000000000008 /* TransferManifestStore.swift in Sources */,
+				0B0000010000000000000002 /* SharedDeviceStorage.swift in Sources */,
+				0A0000010000000000000009 /* NotificationClient.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0B0000010000000000000031 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0B0000010000000000000003 /* ShareViewController.swift in Sources */,
+				0B0000010000000000000004 /* TailscaleUploader.swift in Sources */,
+				0B0000010000000000000005 /* PhotoLibraryClient.swift in Sources */,
+				0B0000010000000000000006 /* TransferRecord.swift in Sources */,
+				0B0000010000000000000007 /* SharedDeviceStorage.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		0B0000010000000000000035 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0B0000010000000000000030 /* TailSyncShare */;
+			targetProxy = 0B0000010000000000000036 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0A0000010000000000000070 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		0A0000010000000000000071 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		0A0000010000000000000080 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = TailSync/TailSync.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KSTB6CZCMC;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TailSync/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sohelislamimran.TailSync;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		0A0000010000000000000081 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = TailSync/TailSync.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KSTB6CZCMC;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TailSync/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sohelislamimran.TailSync;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		0B0000010000000000000080 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = TailSyncShare/TailSyncShare.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KSTB6CZCMC;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TailSyncShare/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sohelislamimran.TailSync.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		0B0000010000000000000081 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = TailSyncShare/TailSyncShare.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = KSTB6CZCMC;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TailSyncShare/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sohelislamimran.TailSync.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0A0000010000000000000050 /* Build configuration list for PBXProject "TailSync" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0A0000010000000000000070 /* Debug */,
+				0A0000010000000000000071 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0A0000010000000000000060 /* Build configuration list for PBXNativeTarget "TailSync" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0A0000010000000000000080 /* Debug */,
+				0A0000010000000000000081 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0B0000010000000000000060 /* Build configuration list for PBXNativeTarget "TailSyncShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0B0000010000000000000080 /* Debug */,
+				0B0000010000000000000081 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0A0000010000000000000040 /* Project object */;
+}
