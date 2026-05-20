@@ -1,10 +1,16 @@
 import Foundation
-import Photos
+
+struct ExportedAssetFile: Sendable {
+    let url: URL
+    let filename: String
+    let mimeType: String
+    let byteCount: Int64
+}
 
 protocol TailscaleUploading: Sendable {
     func upload(
         file: ExportedAssetFile,
-        asset: PHAsset?,
+        creationDate: Date?,
         to peerAPIBaseURL: URL,
         progress: (@Sendable (_ sentBytes: Int64, _ totalBytes: Int64) async -> Void)?
     ) async throws
@@ -16,7 +22,7 @@ struct TailscaleUploader: TailscaleUploading {
 
     func upload(
         file: ExportedAssetFile,
-        asset: PHAsset?,
+        creationDate: Date?,
         to peerAPIBaseURL: URL,
         progress: (@Sendable (_ sentBytes: Int64, _ totalBytes: Int64) async -> Void)? = nil
     ) async throws {
@@ -27,7 +33,7 @@ struct TailscaleUploader: TailscaleUploading {
         request.setValue(file.mimeType, forHTTPHeaderField: "Content-Type")
         request.setValue(file.filename, forHTTPHeaderField: "Tailscale-File-Name")
 
-        if let creationDate = asset?.creationDate {
+        if let creationDate {
             request.setValue(Self.dateFormatter.string(from: creationDate), forHTTPHeaderField: "X-TailSync-Created-At")
         }
 
@@ -58,6 +64,26 @@ struct TailscaleUploader: TailscaleUploading {
             throw PhotoTransferError.invalidTaildropTarget
         }
         return url
+    }
+}
+
+enum PhotoTransferError: LocalizedError {
+    case noResource
+    case invalidTaildropTarget
+    case taildropUnavailable
+    case uploadRejected(Int)
+
+    var errorDescription: String? {
+        switch self {
+        case .noResource:
+            return "No original photo or video resource was available."
+        case .invalidTaildropTarget:
+            return "The Taildrop PeerAPI target URL is invalid."
+        case .taildropUnavailable:
+            return "Taildrop is not reachable on this device right now."
+        case .uploadRejected(let statusCode):
+            return "Taildrop receiver returned HTTP \(statusCode)."
+        }
     }
 }
 

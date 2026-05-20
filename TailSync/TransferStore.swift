@@ -831,7 +831,7 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
             throw PhotoTransferError.taildropUnavailable
         }
         rememberPeerAPIPort(port, for: device.id)
-        try await uploader.upload(file: file, asset: asset, to: endpoint, progress: progress)
+        try await uploader.upload(file: file, creationDate: asset?.creationDate, to: endpoint, progress: progress)
     }
 
     @MainActor

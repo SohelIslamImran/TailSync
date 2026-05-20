@@ -97,7 +97,7 @@ final class ShareExtensionModel {
                           let endpoint = TaildropDevice.peerAPIURL(from: device.endpoint, preferredPort: port) else {
                         throw PhotoTransferError.taildropUnavailable
                     }
-                    try await uploader.upload(file: file, asset: nil, to: endpoint) { sentBytes, totalBytes in
+                    try await uploader.upload(file: file, creationDate: nil, to: endpoint) { sentBytes, totalBytes in
                         await MainActor.run {
                             let currentTotal = totalBytes > 0 ? totalBytes : item.byteCount
                             let itemProgress = currentTotal > 0 ? Double(sentBytes) / Double(currentTotal) : 0

@@ -2,13 +2,6 @@ import Foundation
 import Photos
 import UniformTypeIdentifiers
 
-struct ExportedAssetFile: Sendable {
-    let url: URL
-    let filename: String
-    let mimeType: String
-    let byteCount: Int64
-}
-
 struct PhotoAssetSnapshot: Identifiable, Hashable, Sendable {
     let id: String
     let filename: String
@@ -194,25 +187,5 @@ final class PhotoLibraryClient: @unchecked Sendable {
     private func fileSize(for url: URL) -> Int64 {
         let values = try? url.resourceValues(forKeys: [.fileSizeKey])
         return Int64(values?.fileSize ?? 0)
-    }
-}
-
-enum PhotoTransferError: LocalizedError {
-    case noResource
-    case invalidTaildropTarget
-    case taildropUnavailable
-    case uploadRejected(Int)
-
-    var errorDescription: String? {
-        switch self {
-        case .noResource:
-            return "No original photo or video resource was available."
-        case .invalidTaildropTarget:
-            return "The Taildrop PeerAPI target URL is invalid."
-        case .taildropUnavailable:
-            return "Taildrop is not reachable on this device right now."
-        case .uploadRejected(let statusCode):
-            return "Taildrop receiver returned HTTP \(statusCode)."
-        }
     }
 }

@@ -46,3 +46,7 @@ Config/TailSyncIdentifiers.local.xcconfig
 .idea/
 *.swp
 *.swo
+
+
+# AI generated files
+.codex/
