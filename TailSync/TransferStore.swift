@@ -7,13 +7,25 @@ import UniformTypeIdentifiers
 
 struct IgnoredAutoDeleteFolder: Identifiable, Codable, Hashable, Sendable {
     let id: String
-    let title: String
+    var title: String
     let path: String
 
-    init(url: URL) {
+    init(url: URL, displayName: String? = nil) {
+        let trimmedDisplayName = displayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         self.id = url.absoluteString
-        self.title = url.lastPathComponent.isEmpty ? url.deletingLastPathComponent().lastPathComponent : url.lastPathComponent
+        self.title = trimmedDisplayName.isEmpty ? Self.title(from: url) : trimmedDisplayName
         self.path = url.path(percentEncoded: false)
+    }
+
+    private static func title(from url: URL) -> String {
+        if let localizedName = try? url.resourceValues(forKeys: [.localizedNameKey]).localizedName,
+           !localizedName.isEmpty {
+            return localizedName
+        }
+        if !url.lastPathComponent.isEmpty {
+            return url.lastPathComponent
+        }
+        return url.deletingLastPathComponent().lastPathComponent
     }
 }
 
@@ -558,13 +570,26 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
     }
 
     @MainActor
-    func addIgnoredAutoDeleteFolders(_ urls: [URL]) {
-        guard !urls.isEmpty else { return }
+    func addIgnoredAutoDeleteFolders(_ folders: [IgnoredAutoDeleteFolder]) {
+        guard !folders.isEmpty else { return }
         var foldersByID = Dictionary(uniqueKeysWithValues: ignoredAutoDeleteFolders.map { ($0.id, $0) })
-        for url in urls {
-            foldersByID[url.absoluteString] = IgnoredAutoDeleteFolder(url: url)
+        for folder in folders {
+            foldersByID[folder.id] = folder
         }
         ignoredAutoDeleteFolders = foldersByID.values.sorted { lhs, rhs in
+            lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
+        }
+    }
+
+    @MainActor
+    func renameIgnoredAutoDeleteFolder(_ folder: IgnoredAutoDeleteFolder, title: String) {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty,
+              let index = ignoredAutoDeleteFolders.firstIndex(where: { $0.id == folder.id }) else {
+            return
+        }
+        ignoredAutoDeleteFolders[index].title = trimmedTitle
+        ignoredAutoDeleteFolders.sort { lhs, rhs in
             lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
         }
     }

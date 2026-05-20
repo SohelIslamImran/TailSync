@@ -574,6 +574,7 @@ private struct IgnoredAlbumsSheet: View {
     @Bindable var store: TransferStore
     @Environment(\.dismiss) private var dismiss
     @State private var showingFolderPicker = false
+    @State private var folderToRename: IgnoredAutoDeleteFolder?
 
     var body: some View {
         NavigationStack {
@@ -618,14 +619,23 @@ private struct IgnoredAlbumsSheet: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(store.ignoredAutoDeleteFolders) { folder in
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(folder.title)
-                                    .foregroundStyle(.primary)
-                                Text(folder.path)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(2)
-                                    .truncationMode(.middle)
+                            HStack(alignment: .top, spacing: 10) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(folder.title)
+                                        .foregroundStyle(.primary)
+                                    Text(folder.path)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(2)
+                                        .truncationMode(.middle)
+                                }
+                                Spacer()
+                                Button {
+                                    folderToRename = folder
+                                } label: {
+                                    Image(systemName: "pencil")
+                                }
+                                .buttonStyle(.borderless)
                             }
                             .swipeActions {
                                 Button("Remove", role: .destructive) {
@@ -646,16 +656,59 @@ private struct IgnoredAlbumsSheet: View {
             .task {
                 store.refreshAutoDeleteAlbums()
             }
-            .fileImporter(
-                isPresented: $showingFolderPicker,
-                allowedContentTypes: [.folder],
-                allowsMultipleSelection: true
-            ) { result in
-                if case let .success(urls) = result {
-                    store.addIgnoredAutoDeleteFolders(urls)
+            .sheet(isPresented: $showingFolderPicker) {
+                FolderPicker { folders in
+                    store.addIgnoredAutoDeleteFolders(folders)
+                }
+            }
+            .sheet(item: $folderToRename) { folder in
+                RenameIgnoredFolderSheet(folder: folder) { title in
+                    store.renameIgnoredAutoDeleteFolder(folder, title: title)
                 }
             }
         }
+    }
+}
+
+private struct RenameIgnoredFolderSheet: View {
+    let folder: IgnoredAutoDeleteFolder
+    let save: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var title: String
+
+    init(folder: IgnoredAutoDeleteFolder, save: @escaping (String) -> Void) {
+        self.folder = folder
+        self.save = save
+        _title = State(initialValue: folder.title)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Display name", text: $title)
+                } footer: {
+                    Text(folder.path)
+                        .lineLimit(3)
+                        .truncationMode(.middle)
+                }
+            }
+            .navigationTitle("Rename Folder")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        save(title)
+                        dismiss()
+                    }
+                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+        .presentationDetents([.height(240)])
     }
 }
 
@@ -948,6 +1001,52 @@ private struct DocumentPicker: UIViewControllerRepresentable {
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
             guard let url = urls.first else { return }
             onPick(url)
+        }
+    }
+}
+
+private struct FolderPicker: UIViewControllerRepresentable {
+    let onPick: @MainActor @Sendable ([IgnoredAutoDeleteFolder]) -> Void
+
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let controller = UIDocumentPickerViewController(forOpeningContentTypes: [.folder], asCopy: false)
+        controller.allowsMultipleSelection = true
+        controller.delegate = context.coordinator
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPick: onPick)
+    }
+
+    final class Coordinator: NSObject, UIDocumentPickerDelegate {
+        let onPick: @MainActor @Sendable ([IgnoredAutoDeleteFolder]) -> Void
+
+        init(onPick: @escaping @MainActor @Sendable ([IgnoredAutoDeleteFolder]) -> Void) {
+            self.onPick = onPick
+        }
+
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            let folders = urls.map { url in
+                let didStartAccessing = url.startAccessingSecurityScopedResource()
+                defer {
+                    if didStartAccessing {
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                }
+                return IgnoredAutoDeleteFolder(url: url, displayName: displayName(for: url))
+            }
+            onPick(folders)
+        }
+
+        private func displayName(for url: URL) -> String? {
+            if let localizedName = try? url.resourceValues(forKeys: [.localizedNameKey]).localizedName,
+               !localizedName.isEmpty {
+                return localizedName
+            }
+            return nil
         }
     }
 }
