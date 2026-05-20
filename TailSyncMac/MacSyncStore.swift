@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import Observation
+import ServiceManagement
 import UniformTypeIdentifiers
 
 struct MacSyncRoot: Identifiable, Codable, Hashable, Sendable {
@@ -74,6 +75,21 @@ final class MacSyncStore {
     var autoDeleteDelay: AutoDeleteDelay {
         didSet { UserDefaults.standard.set(autoDeleteDelay.rawValue, forKey: autoDeleteDelayKey) }
     }
+    var smartDeleteEnabled: Bool {
+        didSet { UserDefaults.standard.set(smartDeleteEnabled, forKey: smartDeleteKey) }
+    }
+    var automaticBackgroundSync: Bool {
+        didSet {
+            UserDefaults.standard.set(automaticBackgroundSync, forKey: automaticBackgroundSyncKey)
+            if automaticBackgroundSync {
+                scheduleScan()
+            }
+        }
+    }
+    var retryWhenDevicesReturn: Bool {
+        didSet { UserDefaults.standard.set(retryWhenDevicesReturn, forKey: retryWhenDevicesReturnKey) }
+    }
+    private(set) var launchAtLoginEnabled = false
 
     private(set) var records: [MacFileRecord] = []
     private(set) var isRunning = false
@@ -90,11 +106,16 @@ final class MacSyncStore {
     private let manifestStore: MacSyncManifestStore
     private var syncTask: Task<Void, Never>?
     private var rescanTask: Task<Void, Never>?
+    private var retryTask: Task<Void, Never>?
     private var watchers: [RootWatcher] = []
+    private var activity: NSObjectProtocol?
 
     private let rootsKey = "macSyncRoots"
     private let autoDeleteDelayKey = "macAutoDeleteDelay"
+    private let smartDeleteKey = "macSmartDeleteEnabled"
     private let ignoredDeleteFoldersKey = "macIgnoredDeleteFolders"
+    private let automaticBackgroundSyncKey = "macAutomaticBackgroundSync"
+    private let retryWhenDevicesReturnKey = "macRetryWhenDevicesReturn"
 
     init(
         uploader: TailscaleUploading = TailscaleUploader(),
@@ -108,10 +129,18 @@ final class MacSyncStore {
         self.roots = Self.loadRoots()
         self.ignoredDeleteFolders = Self.loadIgnoredDeleteFolders()
         self.autoDeleteDelay = AutoDeleteDelay(rawValue: UserDefaults.standard.string(forKey: autoDeleteDelayKey) ?? "") ?? .never
+        self.smartDeleteEnabled = UserDefaults.standard.bool(forKey: smartDeleteKey)
+        self.automaticBackgroundSync = UserDefaults.standard.object(forKey: automaticBackgroundSyncKey) as? Bool ?? true
+        self.retryWhenDevicesReturn = UserDefaults.standard.object(forKey: retryWhenDevicesReturnKey) as? Bool ?? true
+        self.launchAtLoginEnabled = Self.currentLaunchAtLoginEnabled
         Task {
             self.records = await manifestStore.allRecords()
             self.rebuildWatchers()
             await self.scanOnly()
+            self.startRetryLoop()
+            if self.automaticBackgroundSync {
+                await self.syncNow()
+            }
         }
     }
 
@@ -150,6 +179,16 @@ final class MacSyncStore {
 
     var canSync: Bool {
         !isRunning && !isPaused && !activeDevices.isEmpty && roots.contains(where: \.isEnabled)
+    }
+
+    var backgroundSummary: String {
+        if launchAtLoginEnabled && automaticBackgroundSync && retryWhenDevicesReturn {
+            return "Launches at login, watches folders, and retries unavailable devices."
+        }
+        if automaticBackgroundSync {
+            return "Watches folders while TailSync is running."
+        }
+        return "Manual sync only."
     }
 
     func addFolderFromPanel() {
@@ -221,6 +260,22 @@ final class MacSyncStore {
         markDevice(id, status: result.status, error: result.error)
     }
 
+    func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            if enabled {
+                if SMAppService.mainApp.status != .enabled {
+                    try SMAppService.mainApp.register()
+                }
+            } else if SMAppService.mainApp.status == .enabled {
+                try SMAppService.mainApp.unregister()
+            }
+            launchAtLoginEnabled = Self.currentLaunchAtLoginEnabled
+        } catch {
+            launchAtLoginEnabled = Self.currentLaunchAtLoginEnabled
+            statusMessage = "Launch at login failed: \(error.localizedDescription)"
+        }
+    }
+
     func syncNow() async {
         guard !isRunning else { return }
         guard !isPaused else {
@@ -262,7 +317,9 @@ final class MacSyncStore {
             statusMessage = "Sync paused."
         } else {
             statusMessage = "Ready"
-            scheduleScan()
+            if automaticBackgroundSync {
+                scheduleScan()
+            }
         }
     }
 
@@ -282,11 +339,13 @@ final class MacSyncStore {
 
     private func runSyncPass() async {
         isRunning = true
+        beginActivity()
         statusMessage = "Scanning folders..."
         defer {
             isRunning = false
             syncTask = nil
             resetCurrentTransfer()
+            endActivity()
         }
 
         await scanOnly()
@@ -512,6 +571,9 @@ final class MacSyncStore {
 
     private func deleteDateAfterSuccessfulTransfer(for record: MacFileRecord) -> Date? {
         guard autoDeleteDelay != .never, !isDeleteIgnored(record.url) else { return nil }
+        if smartDeleteEnabled, isStorageLow {
+            return Date().addingTimeInterval(24 * 60 * 60)
+        }
         guard let interval = autoDeleteDelay.interval else { return nil }
         return Date().addingTimeInterval(interval)
     }
@@ -551,8 +613,27 @@ final class MacSyncStore {
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             await self.scanOnly()
-            if self.canSync {
+            if self.automaticBackgroundSync && self.canSync {
                 await self.syncNow()
+            }
+        }
+    }
+
+    private func startRetryLoop() {
+        retryTask?.cancel()
+        retryTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(120))
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    guard self.retryWhenDevicesReturn,
+                          self.automaticBackgroundSync,
+                          !self.failedRecords.isEmpty,
+                          !self.isRunning,
+                          !self.isPaused else { return }
+                    self.statusMessage = "Checking failed transfers..."
+                    Task { await self.retryFailed() }
+                }
             }
         }
     }
@@ -562,10 +643,25 @@ final class MacSyncStore {
         watchers = roots.filter(\.isEnabled).compactMap { root in
             RootWatcher(url: root.url) { [weak self] in
                 Task { @MainActor in
+                    guard self?.automaticBackgroundSync == true else { return }
                     self?.scheduleScan()
                 }
             }
         }
+    }
+
+    private func beginActivity() {
+        guard activity == nil else { return }
+        activity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiatedAllowingIdleSystemSleep, .latencyCritical],
+            reason: "TailSync is uploading files to Taildrop devices."
+        )
+    }
+
+    private func endActivity() {
+        guard let activity else { return }
+        ProcessInfo.processInfo.endActivity(activity)
+        self.activity = nil
     }
 
     private func applyUpdatedRecord(_ record: MacFileRecord) {
@@ -615,6 +711,17 @@ final class MacSyncStore {
         return mimeType
     }
 
+    private var isStorageLow: Bool {
+        guard let values = try? FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)
+            .first?
+            .resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]),
+              let available = values.volumeAvailableCapacityForImportantUsage else {
+            return false
+        }
+        return available < 5_000_000_000
+    }
+
     private func saveRoots() {
         guard let data = try? JSONEncoder().encode(roots) else { return }
         UserDefaults.standard.set(data, forKey: rootsKey)
@@ -639,6 +746,10 @@ final class MacSyncStore {
             return []
         }
         return folders
+    }
+
+    private static var currentLaunchAtLoginEnabled: Bool {
+        SMAppService.mainApp.status == .enabled
     }
 }
 
