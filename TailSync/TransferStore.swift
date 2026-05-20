@@ -19,6 +19,10 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
         didSet { UserDefaults.standard.set(smartDeleteEnabled, forKey: smartDeleteKey) }
     }
 
+    var ignoredAutoDeleteAlbumIDs: Set<String> {
+        didSet { UserDefaults.standard.set(Array(ignoredAutoDeleteAlbumIDs), forKey: ignoredAutoDeleteAlbumIDsKey) }
+    }
+
     private(set) var authorizationStatus: PHAuthorizationStatus = .notDetermined
     private(set) var pendingCount = 0
     private(set) var transferredCount = 0
@@ -34,6 +38,7 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
     private(set) var currentProgress: Double = 0
     private(set) var currentTransferredBytes: Int64 = 0
     private(set) var currentTotalBytes: Int64 = 0
+    private(set) var autoDeleteAlbums: [PhotoAlbumSummary] = []
 
     private let photoLibrary: PhotoLibraryClient
     private let uploader: TailscaleUploading
@@ -50,6 +55,7 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
 
     private let autoDeleteDelayKey = "autoDeleteDelay"
     private let smartDeleteKey = "smartDeleteEnabled"
+    private let ignoredAutoDeleteAlbumIDsKey = "ignoredAutoDeleteAlbumIDs"
     private let backgroundRefreshIdentifier = Bundle.main.object(forInfoDictionaryKey: "TailSyncBackgroundRefreshIdentifier") as? String ?? ""
     private let minimumTransferRetryDelaySeconds: UInt64 = 90
     private let maximumTransferRetryDelaySeconds: UInt64 = 15 * 60
@@ -69,6 +75,7 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
         self.devices = SharedDeviceStorage.loadDevices(fallback: [])
         self.autoDeleteDelay = AutoDeleteDelay(rawValue: UserDefaults.standard.string(forKey: autoDeleteDelayKey) ?? "") ?? .never
         self.smartDeleteEnabled = UserDefaults.standard.bool(forKey: smartDeleteKey)
+        self.ignoredAutoDeleteAlbumIDs = Set(UserDefaults.standard.stringArray(forKey: ignoredAutoDeleteAlbumIDsKey) ?? [])
         super.init()
         PHPhotoLibrary.shared().register(self)
     }
@@ -161,6 +168,7 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
         }
 
         await rebuildManifestFromLibrary()
+        refreshAutoDeleteAlbums()
         await processDueDeletions()
         await refreshDeviceStatuses(devicesToCheck: activeDevices)
         if !activeDevices.isEmpty {
@@ -281,13 +289,13 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
                     record.transferredByteCount = file.byteCount
                     record.byteCount = file.byteCount
                     record.sentAt = Date()
-                    if await self.shouldDeleteImmediately() {
+                    if await self.shouldDeleteImmediately(asset: asset) {
                         try await photoLibrary.delete(asset: asset)
                         record.status = .deleted
                         record.deletedAt = Date()
                         record.deleteAfter = nil
                     } else {
-                        record.deleteAfter = await self.deleteDateAfterSuccessfulTransfer()
+                        record.deleteAfter = await self.deleteDateAfterSuccessfulTransfer(asset: asset)
                     }
                     try? FileManager.default.removeItem(at: file.url)
                     try await manifestStore.upsert(record)
@@ -477,7 +485,7 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
         guard isRunning, backgroundTaskID == .invalid else { return }
         backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "TailSyncTransfer") { [weak self] in
             Task { @MainActor in
-                self?.endBackgroundContinuationIfIdle()
+                self?.stopTransfer()
             }
         }
     }
@@ -501,6 +509,25 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
     func updateDevice(_ device: TaildropDevice) {
         guard let index = devices.firstIndex(where: { $0.id == device.id }) else { return }
         devices[index] = device
+    }
+
+    @MainActor
+    func refreshAutoDeleteAlbums() {
+        autoDeleteAlbums = photoLibrary.userAlbumSummaries()
+        let validIDs = Set(autoDeleteAlbums.map(\.id))
+        let nextIgnoredIDs = ignoredAutoDeleteAlbumIDs.intersection(validIDs)
+        if nextIgnoredIDs != ignoredAutoDeleteAlbumIDs {
+            ignoredAutoDeleteAlbumIDs = nextIgnoredIDs
+        }
+    }
+
+    @MainActor
+    func setAutoDeleteIgnored(_ albumID: PhotoAlbumSummary.ID, isIgnored: Bool) {
+        if isIgnored {
+            ignoredAutoDeleteAlbumIDs.insert(albumID)
+        } else {
+            ignoredAutoDeleteAlbumIDs.remove(albumID)
+        }
     }
 
     @MainActor
@@ -728,12 +755,19 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
     @MainActor
     private func endBackgroundContinuationIfIdle() {
         guard backgroundTaskID != .invalid, !isRunning else { return }
+        endBackgroundContinuation()
+    }
+
+    @MainActor
+    private func endBackgroundContinuation() {
+        guard backgroundTaskID != .invalid else { return }
         UIApplication.shared.endBackgroundTask(backgroundTaskID)
         backgroundTaskID = .invalid
     }
 
     @MainActor
-    private func shouldDeleteImmediately() async -> Bool {
+    private func shouldDeleteImmediately(asset: PHAsset) async -> Bool {
+        guard !isAutoDeleteIgnored(asset: asset) else { return false }
         if smartDeleteEnabled, isStorageLow {
             return true
         }
@@ -741,12 +775,18 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
     }
 
     @MainActor
-    private func deleteDateAfterSuccessfulTransfer() async -> Date? {
+    private func deleteDateAfterSuccessfulTransfer(asset: PHAsset) async -> Date? {
+        guard !isAutoDeleteIgnored(asset: asset) else { return nil }
         if smartDeleteEnabled, isStorageLow {
             return Date().addingTimeInterval(24 * 60 * 60)
         }
         guard let interval = autoDeleteDelay.interval else { return nil }
         return Date().addingTimeInterval(interval)
+    }
+
+    @MainActor
+    private func isAutoDeleteIgnored(asset: PHAsset) -> Bool {
+        photoLibrary.asset(asset, isInAnyAlbum: ignoredAutoDeleteAlbumIDs)
     }
 
     @MainActor
@@ -756,6 +796,11 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
         for var record in records where record.status == .sent {
             guard let deleteAfter = record.deleteAfter, deleteAfter <= now,
                   let asset = photoLibrary.asset(for: record.id) else { continue }
+            guard !isAutoDeleteIgnored(asset: asset) else {
+                record.deleteAfter = nil
+                updatedRecords.append(record)
+                continue
+            }
             do {
                 try await photoLibrary.delete(asset: asset)
                 record.status = .deleted

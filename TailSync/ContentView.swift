@@ -1,11 +1,14 @@
 import Photos
+import PhotosUI
 import SwiftUI
 import UniformTypeIdentifiers
 
 struct ContentView: View {
     @Bindable var store: TransferStore
     @State private var selectedList: RecordListKind?
+    @State private var showingFileSourceSheet = false
     @State private var showingFilePicker = false
+    @State private var showingPhotoPicker = false
     @State private var selectedFile: PickedFile?
 
     var body: some View {
@@ -23,7 +26,7 @@ struct ContentView: View {
                     )
                     DevicesPanel(store: store)
                     OptionsPanel(store: store)
-                    SendFilePanel { showingFilePicker = true }
+                    SendFilePanel { showingFileSourceSheet = true }
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 18)
@@ -39,8 +42,29 @@ struct ContentView: View {
         .sheet(item: $selectedList) { kind in
             TransferRecordListSheet(kind: kind, records: records(for: kind), store: store)
         }
+        .sheet(isPresented: $showingFileSourceSheet) {
+            FileSourcePickerSheet(
+                pickPhotos: {
+                    showingFileSourceSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        showingPhotoPicker = true
+                    }
+                },
+                pickFiles: {
+                    showingFileSourceSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        showingFilePicker = true
+                    }
+                }
+            )
+        }
         .sheet(isPresented: $showingFilePicker) {
             DocumentPicker { url in
+                selectedFile = PickedFile(url: url)
+            }
+        }
+        .sheet(isPresented: $showingPhotoPicker) {
+            PhotoLibraryPicker { url in
                 selectedFile = PickedFile(url: url)
             }
         }
@@ -462,6 +486,7 @@ private struct DeviceEditSheet: View {
 
 private struct OptionsPanel: View {
     @Bindable var store: TransferStore
+    @State private var showingIgnoredAlbums = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -504,8 +529,89 @@ private struct OptionsPanel: View {
                         .labelsHidden()
                 }
             }
+
+            Button {
+                store.refreshAutoDeleteAlbums()
+                showingIgnoredAlbums = true
+            } label: {
+                DeleteOptionRow(systemImage: "folder.badge.minus") {
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Ignored albums")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+                            Text(ignoredAlbumsSubtitle)
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
         }
         .panelSurface()
+        .sheet(isPresented: $showingIgnoredAlbums) {
+            IgnoredAlbumsSheet(store: store)
+        }
+    }
+
+    private var ignoredAlbumsSubtitle: String {
+        let count = store.ignoredAutoDeleteAlbumIDs.count
+        if count == 0 {
+            return "Keep originals from selected albums."
+        }
+        return "\(count) album\(count == 1 ? "" : "s") protected from auto delete."
+    }
+}
+
+private struct IgnoredAlbumsSheet: View {
+    @Bindable var store: TransferStore
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if store.autoDeleteAlbums.isEmpty {
+                    ContentUnavailableView("No Albums", systemImage: "photo.stack", description: Text("Create albums in Photos to exclude them from auto delete."))
+                } else {
+                    ForEach(store.autoDeleteAlbums) { album in
+                        Button {
+                            store.setAutoDeleteIgnored(
+                                album.id,
+                                isIgnored: !store.ignoredAutoDeleteAlbumIDs.contains(album.id)
+                            )
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: store.ignoredAutoDeleteAlbumIDs.contains(album.id) ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(store.ignoredAutoDeleteAlbumIDs.contains(album.id) ? .blue : .secondary)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(album.title)
+                                        .foregroundStyle(.primary)
+                                    Text("\(album.assetCount) item\(album.assetCount == 1 ? "" : "s")")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Ignored Albums")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .task {
+                store.refreshAutoDeleteAlbums()
+            }
+        }
     }
 }
 
@@ -538,7 +644,7 @@ private struct SendFilePanel: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Send Any File")
                         .font(.headline.weight(.semibold))
-                    Text("Choose a document and send it to enabled devices.")
+                    Text("Choose from Photos or Files and send to devices.")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                 }
@@ -548,6 +654,73 @@ private struct SendFilePanel: View {
             }
             .padding(18)
             .liquidGlass(cornerRadius: 24, interactive: true)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct FileSourcePickerSheet: View {
+    let pickPhotos: () -> Void
+    let pickFiles: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 14) {
+                SourceOptionButton(
+                    title: "Photo Library",
+                    subtitle: "Pick a photo or video from your gallery.",
+                    systemImage: "photo.on.rectangle",
+                    action: pickPhotos
+                )
+
+                SourceOptionButton(
+                    title: "Files",
+                    subtitle: "Pick any document or file from storage.",
+                    systemImage: "folder",
+                    action: pickFiles
+                )
+            }
+            .padding(18)
+            .background(AppBackground())
+            .navigationTitle("Choose Source")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.height(250)])
+    }
+}
+
+private struct SourceOptionButton: View {
+    let title: String
+    let subtitle: String
+    let systemImage: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: systemImage)
+                    .foregroundStyle(.blue)
+                    .frame(width: 38, height: 38)
+                    .background(.blue.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.headline.weight(.semibold))
+                    Text(subtitle)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .background(.white.opacity(0.44), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -707,7 +880,7 @@ private struct AssetThumbnail: View {
 }
 
 private struct DocumentPicker: UIViewControllerRepresentable {
-    let onPick: (URL) -> Void
+    let onPick: @MainActor @Sendable (URL) -> Void
 
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
         let controller = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: true)
@@ -722,15 +895,99 @@ private struct DocumentPicker: UIViewControllerRepresentable {
     }
 
     final class Coordinator: NSObject, UIDocumentPickerDelegate {
-        let onPick: (URL) -> Void
+        let onPick: @MainActor @Sendable (URL) -> Void
 
-        init(onPick: @escaping (URL) -> Void) {
+        init(onPick: @escaping @MainActor @Sendable (URL) -> Void) {
             self.onPick = onPick
         }
 
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
             guard let url = urls.first else { return }
             onPick(url)
+        }
+    }
+}
+
+private struct PhotoLibraryPicker: UIViewControllerRepresentable {
+    let onPick: @MainActor @Sendable (URL) -> Void
+
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var configuration = PHPickerConfiguration(photoLibrary: .shared())
+        configuration.filter = .any(of: [.images, .videos])
+        configuration.selectionLimit = 1
+        configuration.preferredAssetRepresentationMode = .current
+
+        let controller = PHPickerViewController(configuration: configuration)
+        controller.delegate = context.coordinator
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPick: onPick)
+    }
+
+    final class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        let onPick: @MainActor @Sendable (URL) -> Void
+
+        init(onPick: @escaping @MainActor @Sendable (URL) -> Void) {
+            self.onPick = onPick
+        }
+
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            picker.dismiss(animated: true)
+            guard let provider = results.first?.itemProvider,
+                  let typeIdentifier = preferredTypeIdentifier(from: provider) else {
+                return
+            }
+
+            let suggestedName = provider.suggestedName
+            provider.loadFileRepresentation(forTypeIdentifier: typeIdentifier) { [onPick] url, _ in
+                guard let url,
+                      let copiedURL = Self.copyPickedFile(from: url, suggestedName: suggestedName, typeIdentifier: typeIdentifier) else {
+                    return
+                }
+                Task { @MainActor in
+                    onPick(copiedURL)
+                }
+            }
+        }
+
+        private func preferredTypeIdentifier(from provider: NSItemProvider) -> String? {
+            let preferredTypes = [UTType.movie, .mpeg4Movie, .quickTimeMovie, .image, .jpeg, .png, .heic, .item]
+            return preferredTypes
+                .map(\.identifier)
+                .first { provider.hasItemConformingToTypeIdentifier($0) }
+        }
+
+        nonisolated private static func copyPickedFile(from url: URL, suggestedName: String?, typeIdentifier: String) -> URL? {
+            let filename = sanitizedFilename(
+                suggestedName,
+                fallbackExtension: UTType(typeIdentifier)?.preferredFilenameExtension ?? url.pathExtension
+            )
+            let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+            let destination = directory.appendingPathComponent(filename)
+
+            do {
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+                if FileManager.default.fileExists(atPath: destination.path) {
+                    try FileManager.default.removeItem(at: destination)
+                }
+                try FileManager.default.copyItem(at: url, to: destination)
+                return destination
+            } catch {
+                return nil
+            }
+        }
+
+        nonisolated private static func sanitizedFilename(_ suggestedName: String?, fallbackExtension: String) -> String {
+            let trimmedName = suggestedName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let fallback = fallbackExtension.isEmpty ? "dat" : fallbackExtension
+            let base = trimmedName.isEmpty ? "\(UUID().uuidString).\(fallback)" : trimmedName
+            let invalidCharacters = CharacterSet(charactersIn: "/\\?%*|\"<>:")
+            let sanitized = base.components(separatedBy: invalidCharacters).joined(separator: "_")
+            return sanitized.contains(".") ? sanitized : "\(sanitized).\(fallback)"
         }
     }
 }

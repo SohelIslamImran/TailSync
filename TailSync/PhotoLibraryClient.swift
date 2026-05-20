@@ -17,6 +17,12 @@ struct PhotoAssetSnapshot: Identifiable, Hashable, Sendable {
     let byteCount: Int64?
 }
 
+struct PhotoAlbumSummary: Identifiable, Hashable, Sendable {
+    let id: String
+    let title: String
+    let assetCount: Int
+}
+
 final class PhotoLibraryClient: @unchecked Sendable {
     func authorizationStatus() -> PHAuthorizationStatus {
         PHPhotoLibrary.authorizationStatus(for: .readWrite)
@@ -110,6 +116,39 @@ final class PhotoLibraryClient: @unchecked Sendable {
 
     func asset(for localIdentifier: String) -> PHAsset? {
         PHAsset.fetchAssets(withLocalIdentifiers: [localIdentifier], options: nil).firstObject
+    }
+
+    func userAlbumSummaries() -> [PhotoAlbumSummary] {
+        let collections = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .any, options: nil)
+        var albums: [PhotoAlbumSummary] = []
+        albums.reserveCapacity(collections.count)
+        collections.enumerateObjects { collection, _, _ in
+            let count = PHAsset.fetchAssets(in: collection, options: nil).count
+            guard count > 0 else { return }
+            albums.append(
+                PhotoAlbumSummary(
+                    id: collection.localIdentifier,
+                    title: collection.localizedTitle ?? "Untitled Album",
+                    assetCount: count
+                )
+            )
+        }
+        return albums.sorted { lhs, rhs in
+            lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
+        }
+    }
+
+    func asset(_ asset: PHAsset, isInAnyAlbum albumIDs: Set<String>) -> Bool {
+        guard !albumIDs.isEmpty else { return false }
+        let collections = PHAssetCollection.fetchAssetCollectionsContaining(asset, with: .album, options: nil)
+        var isIgnored = false
+        collections.enumerateObjects { collection, _, stop in
+            if albumIDs.contains(collection.localIdentifier) {
+                isIgnored = true
+                stop.pointee = true
+            }
+        }
+        return isIgnored
     }
 
     private func fallbackExtension(for asset: PHAsset) -> String {

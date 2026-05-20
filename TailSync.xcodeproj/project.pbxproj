@@ -25,6 +25,8 @@
 		0B0000010000000000000006 /* TransferRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000010000000000000018 /* TransferRecord.swift */; };
 		0B0000010000000000000007 /* SharedDeviceStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0000010000000000000011 /* SharedDeviceStorage.swift */; };
 		0B0000010000000000000008 /* TailSyncShare.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 0B0000010000000000000014 /* TailSyncShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		0D0000010000000000000001 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D0000010000000000000010 /* AppIntents.framework */; };
+		0D0000010000000000000002 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D0000010000000000000010 /* AppIntents.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +74,7 @@
 		0B0000010000000000000014 /* TailSyncShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TailSyncShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0B0000010000000000000017 /* TailSyncShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TailSyncShare.entitlements; sourceTree = "<group>"; };
 		0C0000010000000000000010 /* TailSyncIdentifiers.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TailSyncIdentifiers.xcconfig; sourceTree = "<group>"; };
+		0D0000010000000000000010 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +82,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D0000010000000000000001 /* AppIntents.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -86,6 +90,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D0000010000000000000002 /* AppIntents.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,8 +103,17 @@
 				0C0000010000000000000020 /* Config */,
 				0A0000010000000000000021 /* TailSync */,
 				0B0000010000000000000015 /* TailSyncShare */,
+				0D0000010000000000000020 /* Frameworks */,
 				0A0000010000000000000022 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		0D0000010000000000000020 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				0D0000010000000000000010 /* AppIntents.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		0A0000010000000000000021 /* TailSync */ = {
