@@ -36,7 +36,7 @@ final class PhotoLibraryClient: @unchecked Sendable {
         fetchTransferableAssets().count
     }
 
-    func fetchTransferableAssets() -> [PHAsset] {
+    func fetchTransferableAssets() -> PHFetchResult<PHAsset> {
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
         options.predicate = NSPredicate(
@@ -44,14 +44,7 @@ final class PhotoLibraryClient: @unchecked Sendable {
             PHAssetMediaType.image.rawValue,
             PHAssetMediaType.video.rawValue
         )
-
-        let result = PHAsset.fetchAssets(with: options)
-        var assets: [PHAsset] = []
-        assets.reserveCapacity(result.count)
-        result.enumerateObjects { asset, _, _ in
-            assets.append(asset)
-        }
-        return assets
+        return PHAsset.fetchAssets(with: options)
     }
 
     func snapshots(for assets: [PHAsset]) -> [PhotoAssetSnapshot] {

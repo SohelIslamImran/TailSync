@@ -33,6 +33,7 @@ struct DeviceReachabilityClient: Sendable {
 
             let finish: @Sendable (Bool) -> Void = { value in
                 guard resumeBox.claim() else { return }
+                connection.stateUpdateHandler = nil
                 connection.cancel()
                 continuation.resume(returning: value)
             }

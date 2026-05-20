@@ -11,6 +11,9 @@ protocol TailscaleUploading: Sendable {
 }
 
 struct TailscaleUploader: TailscaleUploading {
+    private let session = URLSession(configuration: .default)
+    private nonisolated(unsafe) static let dateFormatter = ISO8601DateFormatter()
+
     func upload(
         file: ExportedAssetFile,
         asset: PHAsset?,
@@ -25,17 +28,11 @@ struct TailscaleUploader: TailscaleUploading {
         request.setValue(file.filename, forHTTPHeaderField: "Tailscale-File-Name")
 
         if let creationDate = asset?.creationDate {
-            request.setValue(ISO8601DateFormatter().string(from: creationDate), forHTTPHeaderField: "X-TailSync-Created-At")
+            request.setValue(Self.dateFormatter.string(from: creationDate), forHTTPHeaderField: "X-TailSync-Created-At")
         }
 
         let delegate = UploadProgressDelegate(progress: progress)
-        let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
-        defer {
-            session.invalidateAndCancel()
-            delegate.invalidate()
-        }
-
-        let (_, response) = try await session.upload(for: request, fromFile: file.url)
+        let (_, response) = try await session.upload(for: request, fromFile: file.url, delegate: delegate)
         guard let httpResponse = response as? HTTPURLResponse,
               (200..<300).contains(httpResponse.statusCode) else {
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1

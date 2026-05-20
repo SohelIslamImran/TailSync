@@ -1,7 +1,7 @@
 import Foundation
 import UserNotifications
 
-final class NotificationClient: @unchecked Sendable {
+actor NotificationClient {
     private var failureNotificationDates: [String: Date] = [:]
     private let minimumNotificationInterval: TimeInterval = 60 * 60
 

@@ -246,11 +246,22 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
         currentAssetIsVideo = false
 
         transferTask = Task { [photoLibrary, manifestStore, notificationClient] in
-            let assets = photoLibrary.fetchTransferableAssets()
-            let snapshots = photoLibrary.snapshots(for: assets)
-            await self.mergeSnapshots(snapshots)
+            let fetchResult = photoLibrary.fetchTransferableAssets()
+            let allRecordsBefore = await manifestStore.allRecords()
+            let existingIDs = Set(allRecordsBefore.map(\.id))
+            
+            var newAssets: [PHAsset] = []
+            fetchResult.enumerateObjects { asset, _, _ in
+                if !existingIDs.contains(asset.localIdentifier) {
+                    newAssets.append(asset)
+                }
+            }
+            
+            if !newAssets.isEmpty {
+                let snapshots = photoLibrary.snapshots(for: newAssets)
+                await self.mergeSnapshots(snapshots)
+            }
 
-            let assetByID = Dictionary(uniqueKeysWithValues: assets.map { ($0.localIdentifier, $0) })
             let allRecords = await manifestStore.allRecords()
             let activeDeviceIDs = Set(syncDevices.map(\.id))
             let unsentRecords = allRecords.filter { record in
@@ -263,7 +274,7 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
 
             for var record in unsentRecords {
                 if Task.isCancelled { break }
-                guard let asset = assetByID[record.id] else { continue }
+                guard let asset = photoLibrary.asset(for: record.id) else { continue }
 
                 do {
                     record.status = .sending
@@ -675,11 +686,25 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
 
     @MainActor
     private func rebuildManifestFromLibrary() async {
-        let assets = photoLibrary.fetchTransferableAssets()
-        let snapshots = photoLibrary.snapshots(for: assets)
-        await mergeSnapshots(snapshots)
-        let allRecords = await manifestStore.allRecords()
-        applyRecords(allRecords)
+        let fetchResult = photoLibrary.fetchTransferableAssets()
+        let existing = await manifestStore.allRecords()
+        let existingIDs = Set(existing.map(\.id))
+        
+        var newAssets: [PHAsset] = []
+        fetchResult.enumerateObjects { asset, _, _ in
+            if !existingIDs.contains(asset.localIdentifier) {
+                newAssets.append(asset)
+            }
+        }
+        
+        if !newAssets.isEmpty {
+            let snapshots = photoLibrary.snapshots(for: newAssets)
+            await mergeSnapshots(snapshots)
+            let allRecords = await manifestStore.allRecords()
+            applyRecords(allRecords)
+        } else if records.count != existing.count {
+            applyRecords(existing)
+        }
     }
 
     @MainActor
@@ -687,8 +712,8 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
         let existing = await manifestStore.allRecords()
         let existingByID = Dictionary(uniqueKeysWithValues: existing.map { ($0.id, $0) })
         let newRecords = snapshots.compactMap { snapshot -> TransferRecord? in
-            if let record = existingByID[snapshot.id] {
-                return record
+            if existingByID[snapshot.id] != nil {
+                return nil
             }
             return TransferRecord(
                 id: snapshot.id,
@@ -919,7 +944,12 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
             Task { @MainActor in self?.stopTransfer() }
         }
         await refreshAuthorizationAndCounts()
-        task.setTaskCompleted(success: true)
+        
+        if let transferTask = self.transferTask {
+            _ = await transferTask.result
+        }
+        
+        task.setTaskCompleted(success: !hasRetryableWork)
     }
 
     @MainActor
