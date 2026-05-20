@@ -139,7 +139,6 @@ private struct CurrentTransferPanel: View {
     let progress: Double
     let transferredBytes: Int64
     let totalBytes: Int64
-    @State private var isAnimating = false
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -182,8 +181,6 @@ private struct CurrentTransferPanel: View {
         }
         .padding(12)
         .background(.white.opacity(0.44), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .onAppear { isAnimating = true }
-        .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: isAnimating)
     }
 
     @ViewBuilder
@@ -202,8 +199,7 @@ private struct CurrentTransferPanel: View {
 
             if progress > 0 && progress < 1 {
                 RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .stroke(.blue.opacity(isAnimating ? 0.28 : 0.85), lineWidth: 2)
-                    .scaleEffect(isAnimating ? 1.08 : 1.0)
+                    .stroke(.blue.opacity(0.65), lineWidth: 2)
             }
         }
         .frame(width: 52, height: 52)
@@ -700,9 +696,9 @@ private struct AssetThumbnail: View {
             guard let asset = PHAsset.fetchAssets(withLocalIdentifiers: [assetID], options: nil).firstObject else { return }
             let manager = PHCachingImageManager.default()
             let options = PHImageRequestOptions()
-            options.deliveryMode = .opportunistic
+            options.deliveryMode = .fastFormat
             options.resizeMode = .fast
-            options.isNetworkAccessAllowed = true
+            options.isNetworkAccessAllowed = false
             manager.requestImage(for: asset, targetSize: CGSize(width: 160, height: 160), contentMode: .aspectFill, options: options) { image, _ in
                 self.image = image
             }

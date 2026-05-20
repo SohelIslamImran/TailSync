@@ -42,8 +42,10 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
     private let notificationClient: NotificationClient
     private var transferTask: Task<Void, Never>?
     private var retryTask: Task<Void, Never>?
+    private var photoChangeTask: Task<Void, Never>?
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
     private var didRegisterBackgroundTasks = false
+    private var didRequestNotificationAuthorization = false
     private var unavailableNotificationDates: [TaildropDevice.ID: Date] = [:]
 
     private let autoDeleteDelayKey = "autoDeleteDelay"
@@ -74,6 +76,7 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
     deinit {
         transferTask?.cancel()
         retryTask?.cancel()
+        photoChangeTask?.cancel()
         PHPhotoLibrary.shared().unregisterChangeObserver(self)
     }
 
@@ -146,20 +149,24 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
     @MainActor
     func refreshAuthorizationAndCounts() async {
         authorizationStatus = photoLibrary.authorizationStatus()
-        await notificationClient.requestAuthorization()
+        if !didRequestNotificationAuthorization {
+            didRequestNotificationAuthorization = true
+            await notificationClient.requestAuthorization()
+        }
         registerBackgroundTasks()
-        scheduleBackgroundRefresh()
         guard isAuthorized else {
             pendingCount = 0
+            scheduleBackgroundRefreshIfNeeded()
             return
         }
 
         await rebuildManifestFromLibrary()
         await processDueDeletions()
-        await refreshDeviceStatuses()
+        await refreshDeviceStatuses(devicesToCheck: activeDevices)
         if !activeDevices.isEmpty {
             await startTransfer()
         }
+        scheduleBackgroundRefreshIfNeeded()
     }
 
     @MainActor
@@ -509,7 +516,13 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
 
     @MainActor
     func refreshDeviceStatuses() async {
-        for device in devices {
+        await refreshDeviceStatuses(devicesToCheck: devices)
+    }
+
+    @MainActor
+    private func refreshDeviceStatuses(devicesToCheck: [TaildropDevice]) async {
+        for device in devicesToCheck {
+            guard !Task.isCancelled else { return }
             await checkDeviceStatus(device.id)
         }
     }
@@ -525,8 +538,9 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
                 await MainActor.run {
                     self?.statusMessage = "Rechecking Taildrop devices..."
                 }
-                await self?.refreshDeviceStatuses()
                 guard let self else { return }
+                let devicesToCheck = await MainActor.run { self.activeDevices }
+                await self.refreshDeviceStatuses(devicesToCheck: devicesToCheck)
                 let shouldResume = await MainActor.run {
                     self.isAuthorized && !self.isRunning && !self.activeDevices.isEmpty && self.hasRetryableWork
                 }
@@ -551,11 +565,15 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
     }
 
     func photoLibraryDidChange(_ changeInstance: PHChange) {
-        Task { @MainActor in
+        photoChangeTask?.cancel()
+        photoChangeTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled else { return }
             await rebuildManifestFromLibrary()
             if !activeDevices.isEmpty {
                 await startTransfer()
             }
+            scheduleBackgroundRefreshIfNeeded()
         }
     }
 
@@ -593,34 +611,44 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
                 lastError: nil
             )
         }
-        try? await manifestStore.upsert(newRecords)
+        if !newRecords.isEmpty {
+            try? await manifestStore.upsert(newRecords)
+        }
     }
 
     @MainActor
     private func applyUpdatedRecord(_ record: TransferRecord) {
-        var nextRecords = records
-        if let index = nextRecords.firstIndex(where: { $0.id == record.id }) {
-            nextRecords[index] = record
+        if let index = records.firstIndex(where: { $0.id == record.id }) {
+            records[index] = record
+            recomputeRecordCounts()
         } else {
-            nextRecords.append(record)
+            records.append(record)
+            records.sort(by: recordSortOrder)
+            recomputeRecordCounts()
         }
-        applyRecords(nextRecords)
     }
 
     @MainActor
     private func applyRecords(_ loadedRecords: [TransferRecord]) {
-        records = loadedRecords.sorted { lhs, rhs in
-            switch (lhs.creationDate, rhs.creationDate) {
-            case let (left?, right?):
-                return left < right
-            case (_?, nil):
-                return true
-            case (nil, _?):
-                return false
-            case (nil, nil):
-                return lhs.filename < rhs.filename
-            }
+        records = loadedRecords.sorted(by: recordSortOrder)
+        recomputeRecordCounts()
+    }
+
+    private func recordSortOrder(_ lhs: TransferRecord, _ rhs: TransferRecord) -> Bool {
+        switch (lhs.creationDate, rhs.creationDate) {
+        case let (left?, right?):
+            return left < right
+        case (_?, nil):
+            return true
+        case (nil, _?):
+            return false
+        case (nil, nil):
+            return lhs.filename < rhs.filename
         }
+    }
+
+    @MainActor
+    private func recomputeRecordCounts() {
         pendingCount = records.filter { $0.status == .pending || $0.status == .sending }.count
         transferredCount = records.filter { $0.status == .sent || $0.status == .deleted }.count
         deletedCount = records.filter { $0.status == .deleted }.count
@@ -758,7 +786,7 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
 
     @MainActor
     private func registerBackgroundTasks() {
-        guard !didRegisterBackgroundTasks else { return }
+        guard !didRegisterBackgroundTasks, !backgroundRefreshIdentifier.isEmpty else { return }
         didRegisterBackgroundTasks = true
         BGTaskScheduler.shared.register(forTaskWithIdentifier: backgroundRefreshIdentifier, using: nil) { [weak self] task in
             guard let self, let refreshTask = task as? BGAppRefreshTask else {
@@ -773,7 +801,6 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
 
     @MainActor
     private func handleBackgroundRefresh(_ task: BGAppRefreshTask) async {
-        scheduleBackgroundRefresh()
         task.expirationHandler = { [weak self] in
             Task { @MainActor in self?.stopTransfer() }
         }
@@ -782,7 +809,26 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
     }
 
     @MainActor
+    private func scheduleBackgroundRefreshIfNeeded() {
+        guard shouldScheduleBackgroundRefresh else { return }
+        scheduleBackgroundRefresh()
+    }
+
+    @MainActor
+    private var shouldScheduleBackgroundRefresh: Bool {
+        isAuthorized && (!activeDevices.isEmpty || hasPendingDeleteWork)
+    }
+
+    @MainActor
+    private var hasPendingDeleteWork: Bool {
+        records.contains { record in
+            record.status == .sent && record.deleteAfter != nil
+        }
+    }
+
+    @MainActor
     private func scheduleBackgroundRefresh() {
+        guard !backgroundRefreshIdentifier.isEmpty else { return }
         let request = BGAppRefreshTaskRequest(identifier: backgroundRefreshIdentifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
         try? BGTaskScheduler.shared.submit(request)

@@ -42,6 +42,7 @@ actor TransferManifestStore {
     }
 
     func upsert(_ records: [TransferRecord]) async throws {
+        guard !records.isEmpty else { return }
         for record in records {
             manifest.records[record.id] = record
         }
@@ -62,7 +63,7 @@ private extension JSONEncoder {
     static var manifest: JSONEncoder {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.outputFormatting = [.sortedKeys]
         return encoder
     }
 }

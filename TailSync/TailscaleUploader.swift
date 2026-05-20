@@ -65,15 +65,22 @@ struct TailscaleUploader: TailscaleUploading {
 }
 
 private final class UploadProgressDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    private let lock = NSLock()
     private let progress: (@Sendable (_ sentBytes: Int64, _ totalBytes: Int64) async -> Void)?
+    private var lastEmittedAt = ContinuousClock.now
+    private var lastEmittedBytes: Int64 = 0
     private var isValid = true
+    private let minimumEmitInterval: Duration = .milliseconds(350)
+    private let minimumByteDelta: Int64 = 1_048_576
 
     init(progress: (@Sendable (_ sentBytes: Int64, _ totalBytes: Int64) async -> Void)?) {
         self.progress = progress
     }
 
     func invalidate() {
+        lock.lock()
         isValid = false
+        lock.unlock()
     }
 
     func urlSession(
@@ -83,9 +90,26 @@ private final class UploadProgressDelegate: NSObject, URLSessionTaskDelegate, @u
         totalBytesSent: Int64,
         totalBytesExpectedToSend: Int64
     ) {
-        guard isValid, let progress else { return }
+        guard let progress, shouldEmitProgress(totalBytesSent: totalBytesSent, totalBytesExpectedToSend: totalBytesExpectedToSend) else { return }
         Task {
             await progress(totalBytesSent, totalBytesExpectedToSend)
         }
+    }
+
+    private func shouldEmitProgress(totalBytesSent: Int64, totalBytesExpectedToSend: Int64) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard isValid else { return false }
+
+        let now = ContinuousClock.now
+        let elapsed = lastEmittedAt.duration(to: now)
+        let sentDelta = totalBytesSent - lastEmittedBytes
+        let isComplete = totalBytesExpectedToSend > 0 && totalBytesSent >= totalBytesExpectedToSend
+        let shouldEmit = isComplete || elapsed >= minimumEmitInterval || sentDelta >= minimumByteDelta
+        guard shouldEmit else { return false }
+
+        lastEmittedAt = now
+        lastEmittedBytes = totalBytesSent
+        return true
     }
 }
