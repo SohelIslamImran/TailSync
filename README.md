@@ -7,7 +7,7 @@ The app is intentionally cautious: originals are exported at full quality, each 
 ## Highlights
 
 - Sync photos and videos from the iOS Photos library.
-- Send arbitrary files from inside the app.
+- Send arbitrary files from inside the app, including photos and videos picked from the gallery.
 - Send files from other apps through the iOS share sheet extension.
 - Add multiple Taildrop devices by MagicDNS name or Tailscale IP.
 - Enable Auto Sync per device.
@@ -16,7 +16,14 @@ The app is intentionally cautious: originals are exported at full quality, each 
 - Show active transfer progress with filename, destination, bytes sent, and percent complete.
 - Pause on connection failure, recheck reachability, then retry with exponential backoff.
 - Optional auto-delete delays: never, immediately, 24 hours, 1 week, 15 days, or 30 days.
+- Ignore selected Photos albums and Files folders from auto-delete protection settings.
 - Optional smart delete behavior for low-storage situations.
+
+## Screenshots
+
+| Dashboard | Ignored Locations | Send Source Picker |
+| --- | --- | --- |
+| ![TailSync dashboard](docs/screenshots/dashboard.jpg) | ![Ignored locations settings](docs/screenshots/ignored-locations.jpg) | ![Send source picker](docs/screenshots/send-source-picker.jpg) |
 
 ## How It Works
 

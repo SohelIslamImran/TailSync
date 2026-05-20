@@ -367,16 +367,17 @@ private struct DeviceRow: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
-                    HStack(spacing: 5) {
+                    VStack(alignment: .leading, spacing: 3) {
                         Text(device.status.title)
                             .foregroundStyle(statusTint)
                         if let lastError = device.lastError, !lastError.isEmpty, device.status == .taildropUnavailable || device.status == .invalidURL {
                             Text(lastError)
-                                .lineLimit(1)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(3)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Spacer()
@@ -572,36 +573,70 @@ private struct OptionsPanel: View {
 private struct IgnoredAlbumsSheet: View {
     @Bindable var store: TransferStore
     @Environment(\.dismiss) private var dismiss
+    @State private var showingFolderPicker = false
 
     var body: some View {
         NavigationStack {
             List {
-                if store.autoDeleteAlbums.isEmpty {
-                    ContentUnavailableView("No Albums", systemImage: "photo.stack", description: Text("Create albums in Photos to exclude them from auto delete."))
-                } else {
-                    ForEach(store.autoDeleteAlbums) { album in
-                        Button {
-                            store.setAutoDeleteIgnored(
-                                album.id,
-                                isIgnored: !store.ignoredAutoDeleteAlbumIDs.contains(album.id)
-                            )
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: store.ignoredAutoDeleteAlbumIDs.contains(album.id) ? "checkmark.circle.fill" : "circle")
-                                    .foregroundStyle(store.ignoredAutoDeleteAlbumIDs.contains(album.id) ? .blue : .secondary)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(album.title)
-                                        .foregroundStyle(.primary)
-                                    Text("\(album.assetCount) item\(album.assetCount == 1 ? "" : "s")")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                Section("Photo Albums") {
+                    if store.autoDeleteAlbums.isEmpty {
+                        ContentUnavailableView("No Albums", systemImage: "photo.stack", description: Text("Create albums in Photos to exclude them from auto delete."))
+                    } else {
+                        ForEach(store.autoDeleteAlbums) { album in
+                            Button {
+                                store.setAutoDeleteIgnored(
+                                    album.id,
+                                    isIgnored: !store.ignoredAutoDeleteAlbumIDs.contains(album.id)
+                                )
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: store.ignoredAutoDeleteAlbumIDs.contains(album.id) ? "checkmark.circle.fill" : "circle")
+                                        .foregroundStyle(store.ignoredAutoDeleteAlbumIDs.contains(album.id) ? .blue : .secondary)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(album.title)
+                                            .foregroundStyle(.primary)
+                                        Text("\(album.assetCount) item\(album.assetCount == 1 ? "" : "s")")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Section("Folders") {
+                    Button {
+                        showingFolderPicker = true
+                    } label: {
+                        Label("Choose Folder", systemImage: "folder.badge.plus")
+                    }
+
+                    if store.ignoredAutoDeleteFolders.isEmpty {
+                        Text("No folders ignored.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(store.ignoredAutoDeleteFolders) { folder in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(folder.title)
+                                    .foregroundStyle(.primary)
+                                Text(folder.path)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                                    .truncationMode(.middle)
+                            }
+                            .swipeActions {
+                                Button("Remove", role: .destructive) {
+                                    store.removeIgnoredAutoDeleteFolder(folder)
                                 }
                             }
                         }
                     }
                 }
             }
-            .navigationTitle("Ignored Albums")
+            .navigationTitle("Ignored Locations")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -610,6 +645,15 @@ private struct IgnoredAlbumsSheet: View {
             }
             .task {
                 store.refreshAutoDeleteAlbums()
+            }
+            .fileImporter(
+                isPresented: $showingFolderPicker,
+                allowedContentTypes: [.folder],
+                allowsMultipleSelection: true
+            ) { result in
+                if case let .success(urls) = result {
+                    store.addIgnoredAutoDeleteFolders(urls)
+                }
             }
         }
     }

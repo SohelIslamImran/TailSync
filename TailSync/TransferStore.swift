@@ -5,6 +5,18 @@ import UIKit
 import BackgroundTasks
 import UniformTypeIdentifiers
 
+struct IgnoredAutoDeleteFolder: Identifiable, Codable, Hashable, Sendable {
+    let id: String
+    let title: String
+    let path: String
+
+    init(url: URL) {
+        self.id = url.absoluteString
+        self.title = url.lastPathComponent.isEmpty ? url.deletingLastPathComponent().lastPathComponent : url.lastPathComponent
+        self.path = url.path(percentEncoded: false)
+    }
+}
+
 @Observable
 final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Sendable {
     var devices: [TaildropDevice] {
@@ -21,6 +33,14 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
 
     var ignoredAutoDeleteAlbumIDs: Set<String> {
         didSet { UserDefaults.standard.set(Array(ignoredAutoDeleteAlbumIDs), forKey: ignoredAutoDeleteAlbumIDsKey) }
+    }
+
+    var ignoredAutoDeleteFolders: [IgnoredAutoDeleteFolder] {
+        didSet {
+            if let data = try? JSONEncoder().encode(ignoredAutoDeleteFolders) {
+                UserDefaults.standard.set(data, forKey: ignoredAutoDeleteFoldersKey)
+            }
+        }
     }
 
     private(set) var authorizationStatus: PHAuthorizationStatus = .notDetermined
@@ -56,6 +76,7 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
     private let autoDeleteDelayKey = "autoDeleteDelay"
     private let smartDeleteKey = "smartDeleteEnabled"
     private let ignoredAutoDeleteAlbumIDsKey = "ignoredAutoDeleteAlbumIDs"
+    private let ignoredAutoDeleteFoldersKey = "ignoredAutoDeleteFolders"
     private let backgroundRefreshIdentifier = Bundle.main.object(forInfoDictionaryKey: "TailSyncBackgroundRefreshIdentifier") as? String ?? ""
     private let minimumTransferRetryDelaySeconds: UInt64 = 90
     private let maximumTransferRetryDelaySeconds: UInt64 = 15 * 60
@@ -76,6 +97,12 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
         self.autoDeleteDelay = AutoDeleteDelay(rawValue: UserDefaults.standard.string(forKey: autoDeleteDelayKey) ?? "") ?? .never
         self.smartDeleteEnabled = UserDefaults.standard.bool(forKey: smartDeleteKey)
         self.ignoredAutoDeleteAlbumIDs = Set(UserDefaults.standard.stringArray(forKey: ignoredAutoDeleteAlbumIDsKey) ?? [])
+        if let foldersData = UserDefaults.standard.data(forKey: ignoredAutoDeleteFoldersKey),
+           let folders = try? JSONDecoder().decode([IgnoredAutoDeleteFolder].self, from: foldersData) {
+            self.ignoredAutoDeleteFolders = folders
+        } else {
+            self.ignoredAutoDeleteFolders = []
+        }
         super.init()
         PHPhotoLibrary.shared().register(self)
     }
@@ -528,6 +555,23 @@ final class TransferStore: NSObject, PHPhotoLibraryChangeObserver, @unchecked Se
         } else {
             ignoredAutoDeleteAlbumIDs.remove(albumID)
         }
+    }
+
+    @MainActor
+    func addIgnoredAutoDeleteFolders(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        var foldersByID = Dictionary(uniqueKeysWithValues: ignoredAutoDeleteFolders.map { ($0.id, $0) })
+        for url in urls {
+            foldersByID[url.absoluteString] = IgnoredAutoDeleteFolder(url: url)
+        }
+        ignoredAutoDeleteFolders = foldersByID.values.sorted { lhs, rhs in
+            lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
+        }
+    }
+
+    @MainActor
+    func removeIgnoredAutoDeleteFolder(_ folder: IgnoredAutoDeleteFolder) {
+        ignoredAutoDeleteFolders.removeAll { $0.id == folder.id }
     }
 
     @MainActor
